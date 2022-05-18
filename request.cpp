@@ -107,8 +107,9 @@ bool request::validateHeaders()
 	{
 		if (Body != "")
 			return false;
-	}
 		return path == "echo";
+	}
+		
 	//server supports only this type of content
 	if (Content_Type != "text/html" && Content_Type != "text/plain" && Content_Type != "")
 	{
