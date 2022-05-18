@@ -1,13 +1,5 @@
 #include "request.h"
 
-bool request::fileExist(std::string path)
-{
-	bool exist = false;
-	std::ifstream checker(src_path + path,std::ios_base::in);
-	exist = checker.is_open();
-	if (exist)   checker.close();
-	return exist;
-}
 string request::getFieldbyIdx(size_t idx,size_t fieldbias)
 {
 	if(idx-fieldbias!=string::npos)
@@ -65,10 +57,13 @@ void request::extractHeaders()
 		if (querystart != string::npos)
 			Query = raw_message.substr(querystart+1, raw_message.substr(querystart).find(' ')-1);
 		else if (path == "")	reqErr = MissingData;
-	}
+	}//append relevant suffix to file requested.
 	if (Query == "lang=en") appendQuerytoPath("en");
 	else if (Query == "lang=he") appendQuerytoPath("he");
 	else if (Query == "lang=fr") appendQuerytoPath("fr");
+	//in case no body and all that need to be posted or put is in URI
+	if ((reqMethod == PUT || reqMethod == POST) && Body == "")
+		Content_Length = path.size() + Query.size();
 }
 
 bool request::validateHeaders()
@@ -102,13 +97,17 @@ bool request::validateHeaders()
 			reqErr = MissingData;
 			return false;
 		}
-		if(Query != "" && Query.find("lang") == string::npos)
+		if(Query != "" && Query.find("lang") == string::npos && reqMethod == GET)
 		{
 			reqErr = UnsupportedHeader;
 			return false;
 		}
 	}
 	if (reqMethod == TRACE)
+	{
+		if (Body != "")
+			return false;
+	}
 		return path == "echo";
 	//server supports only this type of content
 	if (Content_Type != "text/html" && Content_Type != "text/plain" && Content_Type != "")
@@ -135,4 +134,16 @@ bool request::validateHeaders()
 		return false;
 	}
 	return true;
+}
+
+bool request::createResource()
+{
+	std::fstream newfile(src_path + path, std::ios_base::out | std::ios_base::trunc);
+	if (newfile.is_open())
+	{
+		newfile << Body;
+		newfile.close();
+		return true;
+	}
+	return false;
 }

@@ -48,10 +48,18 @@ bool SocketsHandler::isValidRequest(int idx)
 	case TRACE:
 		return cur_req.path == "echo";
 	case POST:
-		return canCreateFile(idx);
+		return true;
 	case _DELETE:
 		return !canCreateFile(idx);
 	}
+}
+void SocketsHandler::printPOSTmessage(int idx)
+{
+	std::cout << "\n\nhost:" << sockets[idx].Request.Host << std::endl
+		<< "posted:" << sockets[idx].Request.path << ' '
+		<< sockets[idx].Request.Query << std::endl
+		<< sockets[idx].Request.Body
+		<< std::endl << std::endl;
 }
 void SocketsHandler::generateValidResponse(int idx)
 {
@@ -63,42 +71,38 @@ void SocketsHandler::generateValidResponse(int idx)
 	switch (curr_req.reqMethod)
 	{
 	case GET:
-		
+	case HEAD:
 		if (success = curr_res.extract_desired_file_content(src_path+curr_req.path))
-		{
 			curr_res.responseMSG.append(string("200") + CRLF);
-		}
 		
 		else
 			curr_res.responseMSG.append(string("500") + CRLF);
 		curr_res.insertHeaders("GET",curr_req.path);
-		if (success)
+		if (success && curr_req.reqMethod == GET)
 			curr_res.responseMSG.append(curr_res.bodyhandler);
 		break;
 	case POST:
-		//create file (that doesn't exist enumarated) and  create resource (params?)
-		//add status code based on previous action
-		//add relevant headers : date,connection,cont-type,cont-length
+		printPOSTmessage(idx);
+		curr_res.responseMSG.append(string("200") + CRLF);
+		curr_res.insertHeaders("POST", curr_req.path);
 		break;
 	case PUT:
-		//create file (or truncate a one that exists) and put body
-		//add status code based on previous action
-		//add relevant headers
+		if(success = curr_req.createResource()) 
+			curr_res.responseMSG.append(string("200") + CRLF);
+		else 
+			curr_res.responseMSG.append(string("500") + CRLF);
+		curr_res.insertHeaders("PUT", curr_req.path);
 		break;
 	case _DELETE:
-		// delete file 
-		//add status code based on previous action
-		//add relevant headers
-		break;
-	case HEAD:
-		if (success = curr_res.extract_desired_file_content(src_path + curr_req.path))
-		{
+		success = curr_res.extract_desired_file_content(src_path + curr_req.path);
+		if(remove((src_path + curr_req.path).c_str()) == NULL)
 			curr_res.responseMSG.append(string("200") + CRLF);
-		}
-
 		else
 			curr_res.responseMSG.append(string("500") + CRLF);
-		curr_res.insertHeaders("GET", curr_req.path);
+
+		curr_res.insertHeaders("DELETE", curr_req.path);
+		if(success)
+			curr_res.responseMSG.append(curr_res.bodyhandler);
 		break;
 	case OPTIONS:
 		curr_res.responseMSG.append(string("200") + CRLF);
@@ -117,27 +121,27 @@ void SocketsHandler::generateINValidResponse(int idx)
 	SocketState& current_socket = sockets[idx];
 	request& curr_req = current_socket.Request;
 	response& curr_res = current_socket.Response;
+	if (curr_req.reqErr == NotFound || curr_req.reqErr == MissingData)
+		curr_res.responseMSG.append(string("404") + CRLF);
+	else if (curr_req.reqErr == UnsupportedHeader || curr_req.reqErr == UnsupportedFormat)
+		curr_res.responseMSG.append(string("400") + CRLF);
+
 	switch (curr_req.reqMethod)
 	{
 	case HEAD:
 	case GET:
-		if (curr_req.reqErr == NotFound || curr_req.reqErr == MissingData)
-		curr_res.responseMSG.append(string("404 NOT FOUND") + CRLF);
 		curr_res.insertHeaders("GET",curr_req.path,false);
 		break;
 	case POST:
-		//create file (that doesn't exist) and  create resource (params?)
-		//add status code based on previous action
-		//add relevant headers : date,connection,cont-type,cont-length
+		curr_res.insertHeaders("POST", curr_req.path, false);
 		break;
 	case PUT:
-		//create file (or truncate a one that exists) and put body
+		curr_res.insertHeaders("PUT", curr_req.path, false);
 		break;
 	case _DELETE:
-
+		curr_res.insertHeaders("DELETE", curr_req.path, false);
 		break;
 	case TRACE:
-		curr_res.responseMSG.append(string("405") + CRLF);
 		curr_res.insertHeaders("TRACE", {}, false);
 		break;
 	}

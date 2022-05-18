@@ -32,7 +32,9 @@ public:
 	//---------------
 	string Body;
 	int read_cursor;
-	bool fileExist(string);
+
+
+	string getFieldbyIdx(size_t,size_t);
 	void classifyReqMethod()
 	{
 
@@ -79,8 +81,6 @@ public:
 	}
 	void extractHeaders();
 	void assignReqHeaders();
-	string getFieldbyIdx(size_t,size_t);
-	bool validateHeaders();
 	void appendQuerytoPath(string);
 	void reset()
 	{
@@ -97,6 +97,9 @@ public:
 		Content_Length = 0;
 		read_cursor = 0;
 	}
+	bool validateHeaders();
+	bool createResource();
+	bool deleteResource();
 };
 
 

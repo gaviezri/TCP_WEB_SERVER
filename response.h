@@ -17,6 +17,8 @@ public:
 		responseMSG = { "HTTP/1.1 " };
 	}
 	bool extract_desired_file_content(std::string);
+
+
 	void insertHeaders(const char*, std::string = {}, bool valid = true,int=0);
 
 

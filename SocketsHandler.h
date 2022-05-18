@@ -2,6 +2,7 @@
 
 #include <time.h>
 #include <winsock2.h>
+#include <iostream>
 #include "request.h"
 #include "response.h"
 
@@ -65,9 +66,12 @@ public:
 	}
 	void breakdownRequest(int);
 	void generateResponse(int);
-	bool isValidRequest(int);
+	void printPOSTmessage(int);
 	void generateValidResponse(int);
 	void generateINValidResponse(int);
+
 	bool canCreateFile(int);
+	bool isValidRequest(int);
+
 	
 };

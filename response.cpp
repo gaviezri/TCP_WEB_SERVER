@@ -15,6 +15,7 @@ bool response::extract_desired_file_content(std::string path)
 	return false;
 }
 
+
 void response::insertHeaders(const char* method, std::string path,bool valid, int reqsize)
 {
 	std::set<std::string> CRUDpool = { "GET","HEAD","DELETE","PUT","POST", "TRACE"};
