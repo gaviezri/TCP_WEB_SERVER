@@ -25,13 +25,13 @@ void response::insertHeaders(const char* method, std::string path,bool valid, in
 	now_gmt[strlen(now_gmt) - 1] = '\0';
 	responseMSG.append(std::string("Date: ")+now_gmt+CRLF).append(std::string("Connection: keep-alive")+CRLF);
 	responseMSG.append(std::string("Server: MyTCPServ") + CRLF);
-	responseMSG.append(std::string("Host: ")+host+CRLF);
+//	responseMSG.append(std::string("Host: ")+host+CRLF);
+	responseMSG.append("Accept: text/plan").append(CRLF).append("Accept: text/html").append(CRLF);
 
 	if (std::string(method) == "OPTIONS")
 	{
 		responseMSG.append("Allow: ").append(supported_methods);
 	}
-
 	else if (CRUDpool.find(method)!=CRUDpool.end() && valid)
 	{
 		if (path.find(".txt") != std::string::npos)
@@ -40,12 +40,15 @@ void response::insertHeaders(const char* method, std::string path,bool valid, in
 			responseMSG.append(std::string("Content-Type: text/html;charset=utf-8") + CRLF);
 		else
 			responseMSG.append(std::string("Content-Type: */*;charset=utf-8") + CRLF);
-		if (std::string(method) != "HEAD" && valid)
-		{
-			responseMSG.append("Content-Length: ").append(std::to_string(method != "TRACE" ? 
-				bodyhandler.length() : reqsize) + CRLF);
-		}
+	
 		
 	}
+	if (std::string(method) != "HEAD" || std::string(method) != "DELETE")
+	{
+		responseMSG.append("Content-Length: ").append(std::to_string(method != "TRACE" ?
+			bodyhandler.length() : reqsize) + CRLF);
+	}
+	if (std::string(method) == "TRACE")
+		responseMSG.append("Max-Forwards: 0").append(CRLF);
 	responseMSG.append(CRLF);//extra empty line to indicate beggining of body
 }

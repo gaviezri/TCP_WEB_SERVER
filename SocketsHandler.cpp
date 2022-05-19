@@ -15,7 +15,7 @@ void SocketsHandler::generateResponse(int idx)
 	sockets[idx].Response.reset();//<-- clean response fields, prior filling them
 	if (isValidRequest(idx)) generateValidResponse(idx);
 	else generateINValidResponse(idx);
-	sockets[idx].Request.reset(); //<--- clean request fields, prepare for next request
+	sockets[idx].Request.preparefornext(); //<--- clean request fields, prepare for next request
 }
 
 
@@ -48,9 +48,15 @@ bool SocketsHandler::isValidRequest(int idx)
 	case TRACE:
 		return cur_req.path == "echo";
 	case POST:
+	case PUT:
 		return true;
 	case _DELETE:
-		return !canCreateFile(idx);
+		if (canCreateFile(idx))
+		{
+			sockets[idx].Request.reqErr = NotFound;
+			return false;
+		}
+		return true;
 	}
 }
 void SocketsHandler::printPOSTmessage(int idx)
@@ -121,6 +127,7 @@ void SocketsHandler::generateINValidResponse(int idx)
 	SocketState& current_socket = sockets[idx];
 	request& curr_req = current_socket.Request;
 	response& curr_res = current_socket.Response;
+	curr_res.host = curr_req.Host;
 	if (curr_req.reqErr == NotFound || curr_req.reqErr == MissingData)
 		curr_res.responseMSG.append(string("404") + CRLF);
 	else if (curr_req.reqErr == UnsupportedHeader || curr_req.reqErr == UnsupportedFormat)
@@ -143,7 +150,9 @@ void SocketsHandler::generateINValidResponse(int idx)
 		break;
 	case TRACE:
 		curr_res.insertHeaders("TRACE", {}, false);
+		curr_res.responseMSG.append(CRLF);
 		break;
 	}
+
 }
 

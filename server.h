@@ -30,7 +30,7 @@ public:
 	server();
 	int run();
 private:
-	bool addSocket(SOCKET id, eRecvMode r_mode);
+	bool addSocket(SOCKET id, eRecvMode r_mode,int*);
 	void makeFDset_select();
 	void checkTimeout();
 	void clearSocket(int idx)

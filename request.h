@@ -84,15 +84,19 @@ public:
 	void appendQuerytoPath(string);
 	void reset()
 	{
+		Host.clear();
+		Accept.clear();
+		Accept_Lang.clear();
+		preparefornext();
+	}
+	void preparefornext()
+	{
 		reqMethod = NONE;
 		reqErr = NOERR;
 		raw_message.clear();
 		path.clear();
 		Query.clear();
 		Connection.clear();
-		Host.clear();
-		Accept.clear();
-		Accept_Lang.clear();
 		Content_Type.clear();
 		Content_Length = 0;
 		read_cursor = 0;

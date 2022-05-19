@@ -16,6 +16,12 @@ public:
 	{
 		responseMSG = { "HTTP/1.1 " };
 	}
+	void clear()
+	{
+		host = "";
+		reset();
+		bodyhandler = "";
+	}
 	bool extract_desired_file_content(std::string);
 
 

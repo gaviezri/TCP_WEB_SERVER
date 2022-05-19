@@ -43,7 +43,7 @@ int server::run()
 {
 	try
 	{
-		addSocket(listenSocket, LISTEN);
+		addSocket(listenSocket, LISTEN,NULL);
 		cout << "Server is running at port:" << PORT << endl;
 		while (true)
 		{
@@ -63,7 +63,7 @@ int server::run()
 }
 
 
-bool server::addSocket(SOCKET _id, eRecvMode r_mode)
+bool server::addSocket(SOCKET _id, eRecvMode r_mode,int* sock_idx)
 {
 	for (size_t i = 0; i < MAX_SOCKETS; i++)
 	{
@@ -71,7 +71,7 @@ bool server::addSocket(SOCKET _id, eRecvMode r_mode)
 		{	
 			sock_handler.init_socket(i,_id, r_mode);
 			++sock_handler.count;
-
+			if(sock_idx) *sock_idx = i;
 			unsigned long flag = 1;
 			if (ioctlsocket(sock_handler.sockets[i].id, FIONBIO, &flag))
 			{
@@ -180,11 +180,15 @@ void server::acceptConnection(int idx)
 	}
 	//successful connection 
 	std::cout << "serv: Client " << inet_ntoa(from.sin_addr) << ":" << ntohs(from.sin_port) << " is connected." << endl;
-	if (!addSocket(msgSocket,RECEIVE))
+	int new_idx;
+	if (!addSocket(msgSocket,RECEIVE,&new_idx))
 	{//cant add socket
 		std::cout << "\t\tToo many connections; dropped!\n";
 		closesocket(id);
 	}
+	else
+		sock_handler.sockets[new_idx].Request.Host = string(inet_ntoa(from.sin_addr)) + string(":") + to_string(ntohs(from.sin_port));
+
 }
 
 
@@ -204,12 +208,9 @@ void server::retrieveRequest(int idx)
 void server::sendResponse(int idx)
 {
 	SocketState& metaSocket = sock_handler.sockets[idx];
-	if (metaSocket.Request.Connection == "close")
-	{
-		metaSocket.clear();
-	}
+	
 	sock_handler.generateResponse(idx);
-	int total_size_to_send = metaSocket.Response.responseMSG.size();
+ 	int total_size_to_send = metaSocket.Response.responseMSG.size();
 	int bytesSent = send(metaSocket.id, metaSocket.Response.responseMSG.data(),total_size_to_send, 0);
 
 	if (SOCKET_ERROR == bytesSent)
@@ -220,6 +221,10 @@ void server::sendResponse(int idx)
 	metaSocket.reset();
 	cout << "Server: Sent: " << bytesSent << "/" << total_size_to_send
 		<< " bytes of TCP Payload"<<endl;
+	if (metaSocket.Request.Connection == "close")
+	{
+		metaSocket.clear();
+	}
 }
 
 char* server::receiveEntireMessage(int idx)

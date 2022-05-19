@@ -11,17 +11,15 @@ void request::assignReqHeaders()
 	//make all content lower-case
 	for (auto& c : raw_message) c = tolower(c);
 
-	size_t host_idx = raw_message.find("host:") + 5;
 	size_t connection_idx = raw_message.find("connection:") + 11;
 	size_t accept_idx = raw_message.find("accept:") + 7;
 	size_t accept_lang_idx = raw_message.find("accept-language:") + 16;
 	size_t date_idx = raw_message.find("date:") + 5;
-	size_t cont_type_idx = raw_message.find("content-type:") + 13;
+	size_t cont_type_idx = raw_message.find("content-type:") + 14;
 	size_t content_len_idx = raw_message.find("content-length:") + 15;
 	size_t charset_idx = raw_message.find("accept-charset:") + 15;
 	size_t body_idx = raw_message.find(string(CRLF) + CRLF)+4;
 
-	Host = getFieldbyIdx(host_idx,5);
 	Connection = getFieldbyIdx(connection_idx,11);
 	Accept = getFieldbyIdx(accept_idx,7);
 	Accept_Lang = getFieldbyIdx(accept_lang_idx,16);
@@ -75,16 +73,17 @@ bool request::validateHeaders()
 	//check for required information provided for method
 	if (reqMethod == PUT || reqMethod == POST)
 	{
-		if ((path == "" && Query == "") || Content_Length == 0)
+		if ((path == "" && Query == "") || Content_Length == 0 || Content_Length != Body.size())
 		{
 			reqErr = eReqError::MissingData;
 			return false;
 		}
+	
 	}
 	else
 	// check for redundancy provided 
 	{
-		if (Body != "" || Content_Length > 0)
+		if ((Body != "" || Content_Length > 0) && reqMethod != _DELETE)
 		{
 			reqErr = eReqError::UnsupportedHeader;
 			return false;

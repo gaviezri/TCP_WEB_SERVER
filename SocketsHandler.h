@@ -44,10 +44,8 @@ public:
 	}
 	void reset()
 	{
-		Recv = r_EMPTY;
+		Recv = RECEIVE;
 		Send = IDLE;
-		Response.reset();
-		Request.reset();
 	}
 
 };
